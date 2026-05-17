@@ -98,3 +98,23 @@ async def test_same_key_different_body_returns_409(client):
     )
     assert resp.status_code == 409
     assert "different request body" in resp.json()["detail"]
+
+    
+@pytest.mark.asyncio
+async def test_concurrent_requests_with_same_key(client):
+    """Two identical concurrent requests: only one is processed, both return the same result."""
+    key = "key-race-001"
+    payload = {"amount": 200, "currency": "RWF"}
+
+    results = await asyncio.gather(
+        client.post("/process-payment", json=payload, headers={"Idempotency-Key": key}),
+        client.post("/process-payment", json=payload, headers={"Idempotency-Key": key}),
+    )
+
+
+    for r in results:
+        assert r.status_code == 201
+
+    bodies = [r.json()["transaction_id"] for r in results]
+    
+    assert bodies[0] == bodies[1], "Race condition: two different transactions were created!"
