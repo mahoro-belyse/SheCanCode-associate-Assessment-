@@ -118,3 +118,26 @@ async def test_concurrent_requests_with_same_key(client):
     bodies = [r.json()["transaction_id"] for r in results]
     
     assert bodies[0] == bodies[1], "Race condition: two different transactions were created!"
+
+@pytest.mark.asyncio
+async def test_rate_limit_enforced(client):
+    """After RATE_LIMIT_MAX requests in the window, the next request should be 429."""
+    from app.main import RATE_LIMIT_MAX
+
+    responses = []
+    for i in range(RATE_LIMIT_MAX + 1):
+        r = await client.post(
+            "/process-payment",
+            json={"amount": 1, "currency": "GHS"},
+            headers={"Idempotency-Key": f"key-rate-{i}"},
+        )
+        responses.append(r.status_code)
+
+    assert 429 in responses, "Rate limit was not enforced"
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    resp = await client.get("/health")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
