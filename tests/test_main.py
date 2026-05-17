@@ -20,7 +20,6 @@ async def client():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
-
 @pytest.mark.asyncio
 async def test_first_payment_returns_201(client):
     resp = await client.post(
@@ -99,7 +98,7 @@ async def test_same_key_different_body_returns_409(client):
     assert resp.status_code == 409
     assert "different request body" in resp.json()["detail"]
 
-    
+
 @pytest.mark.asyncio
 async def test_concurrent_requests_with_same_key(client):
     """Two identical concurrent requests: only one is processed, both return the same result."""
@@ -111,18 +110,18 @@ async def test_concurrent_requests_with_same_key(client):
         client.post("/process-payment", json=payload, headers={"Idempotency-Key": key}),
     )
 
-
     for r in results:
         assert r.status_code == 201
 
     bodies = [r.json()["transaction_id"] for r in results]
-    
     assert bodies[0] == bodies[1], "Race condition: two different transactions were created!"
+
 
 @pytest.mark.asyncio
 async def test_rate_limit_enforced(client):
     """After RATE_LIMIT_MAX requests in the window, the next request should be 429."""
-    from app.main import RATE_LIMIT_MAX
+    from app.config import settings
+    RATE_LIMIT_MAX = settings.RATE_LIMIT_MAX
 
     responses = []
     for i in range(RATE_LIMIT_MAX + 1):
