@@ -98,7 +98,7 @@ Client A          Client B          Gateway         Store
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/idempotency-gateway.git
+git clone https://github.com/mahoro-belyse/SheCanCode-associate-Assessment-.git
 cd idempotency-gateway
 ```
 
