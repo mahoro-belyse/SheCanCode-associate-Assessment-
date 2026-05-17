@@ -81,3 +81,20 @@ async def test_duplicate_has_no_processing_delay(client):
     assert elapsed < 0.5, f"Cached response took too long: {elapsed:.2f}s"
 
 
+@pytest.mark.asyncio
+async def test_same_key_different_body_returns_409(client):
+    key = "key-conflict-001"
+
+    await client.post(
+        "/process-payment",
+        json={"amount": 100, "currency": "GHS"},
+        headers={"Idempotency-Key": key},
+    )
+
+    resp = await client.post(
+        "/process-payment",
+        json={"amount": 500, "currency": "GHS"},
+        headers={"Idempotency-Key": key},
+    )
+    assert resp.status_code == 409
+    assert "different request body" in resp.json()["detail"]
