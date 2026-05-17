@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: igire-pay-gateway
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: RELOAD
+        value: "False"
+      - key: PROCESSING_DELAY_SECONDS
+        value: "2.0"
+      - key: KEY_TTL_SECONDS
+        value: "86400"
+      - key: RATE_LIMIT_MAX
+        value: "10"
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
